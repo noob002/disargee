@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>THE MINORITY: SHAME PROTOCOL</title>
+    <title>THE MINORITY: ?????? PROTOCOL</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
 
@@ -34,11 +34,8 @@
         body.mode-break { --main-color: #ffffff; }
         body.mode-clear { --main-color: #00ffff; }
         body.mode-gray { --main-color: #888888; }
-        
         body.mode-nightmare { --main-color: #b026ff; --rank-bg: rgba(20, 0, 20, 0.95); }
         body.mode-chaos { --main-color: #00ffea; text-shadow: 2px 0 #ff00ff; }
-        
-        /* 하남자(초기화 사용자) 테마: 칙칙한 갈색 */
         body.mode-coward { --main-color: #cd853f; }
 
         .crt-frame {
@@ -87,7 +84,32 @@
         }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
 
-        /* ================= MODALS ================= */
+        /* 이스터에그: 운석 충돌 효과 */
+        #meteor-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; z-index: 9999; align-items: center; justify-content: center;
+        }
+        .meteor {
+            width: 10px; height: 10px; background: radial-gradient(circle, #fff, #ffcc00, #ff3333);
+            border-radius: 50%; transform: scale(1);
+            animation: impact 2.5s forwards cubic-bezier(0.6, 0.04, 0.98, 0.335);
+        }
+        @keyframes impact {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(50); opacity: 1; }
+            80% { transform: scale(200); background: #fff; opacity: 1; } 
+            100% { transform: scale(500); background: #fff; opacity: 1; }
+        }
+        .shake-body { animation: violent-shake 0.1s infinite; }
+        @keyframes violent-shake {
+            0% { transform: translate(0, 0); }
+            25% { transform: translate(-10px, 10px); }
+            50% { transform: translate(10px, -10px); }
+            75% { transform: translate(-10px, -10px); }
+            100% { transform: translate(0, 0); }
+        }
+
+        /* MODALS */
         #rank-open-btn { position: absolute; top: 0; left: 0; font-size: 1.2rem; padding: 5px 10px; border: 1px solid var(--main-color); display: block; }
 
         .modal-overlay {
@@ -95,8 +117,6 @@
             width: 80%; height: auto; padding: 20px; background: var(--bg-color); border: 2px solid var(--main-color);
             z-index: 2000; flex-direction: column; text-align: center; box-shadow: 0 0 30px #000;
         }
-        
-        /* 랭킹 모달 */
         .rank-tabs { display: flex; justify-content: center; gap: 10px; margin-bottom: 10px; }
         .rank-tab { font-size: 1.2rem; border-bottom: 1px solid transparent; opacity: 0.5; }
         .rank-tab.active { opacity: 1; border-bottom: 1px solid var(--main-color); font-weight: bold; }
@@ -105,15 +125,12 @@
         .rank-table td { padding: 5px; text-align: center; }
         .rank-user { color: #fff; text-shadow: 0 0 5px #fff; }
 
-        /* 초기화 경고 모달 */
         #reset-confirm-modal { border-color: #ff3333; color: #ff3333; }
-        #reset-confirm-modal h2 { margin-top: 0; }
         .modal-btns { display: flex; justify-content: center; gap: 20px; margin-top: 20px; }
 
-        /* Phases */
+        /* Phase Screens */
         #screen-phase1, #screen-phase2, #screen-phase3, #screen-end { display: none; width: 100%; text-align: center; }
         
-        /* Styles */
         .question-text { font-size: 2rem; min-height: 80px; margin-bottom: 30px; }
         .result-bar-bg { width: 100%; height: 20px; background: #111; border: 1px solid var(--main-color); margin-top: 20px; display: none; }
         .result-bar-fill { height: 100%; background: var(--main-color); width: 0%; transition: width 0.5s; }
@@ -138,6 +155,8 @@
     </style>
 </head>
 <body class="mode-green">
+    <div id="meteor-overlay"><div class="meteor"></div></div>
+
     <div class="scanline"></div>
 
     <div class="crt-frame" id="game-frame">
@@ -194,9 +213,7 @@
                 <div class="end-content">
                     <h1 class="shine-text" id="end-title">ALL CLEAR</h1>
                     <p id="end-desc" style="font-size: 1.5rem; margin-top: 20px;">...</p>
-                    
                     <div id="shame-display" style="display:none;" class="shame-text"></div>
-
                     <div style="margin-top: 30px;">
                         <button id="reboot-btn" onclick="location.reload()">SYSTEM REBOOT</button>
                         <button id="skip-btn" onclick="skipToEnding()">>> SKIP >></button>
@@ -208,16 +225,8 @@
 
         <div id="rank-modal" class="modal-overlay">
             <h2 style="text-align: center; margin: 0 0 20px 0;">GLOBAL LEADERBOARD</h2>
-            <div class="rank-tabs">
-                <button class="rank-tab active" id="tab-legend" onclick="showRank('legend')">LEGEND</button>
-                <button class="rank-tab" id="tab-god" onclick="showRank('god')">GOD</button>
-            </div>
-            <div style="flex:1; overflow-y: auto;">
-                <table class="rank-table">
-                    <thead><tr><th width="15%">RANK</th><th width="40%">NAME</th><th width="25%">FAILS</th><th width="20%">DATE</th></tr></thead>
-                    <tbody id="rank-tbody"></tbody>
-                </table>
-            </div>
+            <div class="rank-tabs"><button class="rank-tab active" id="tab-legend" onclick="showRank('legend')">LEGEND</button><button class="rank-tab" id="tab-god" onclick="showRank('god')">GOD</button></div>
+            <div style="flex:1; overflow-y: auto;"><table class="rank-table"><thead><tr><th width="15%">RANK</th><th width="40%">NAME</th><th width="25%">FAILS</th><th width="20%">DATE</th></tr></thead><tbody id="rank-tbody"></tbody></table></div>
             <button id="close-rank-btn" onclick="closeRanking()">CLOSE</button>
         </div>
 
@@ -225,15 +234,41 @@
             <h2>⚠ WARNING ⚠</h2>
             <p style="font-size: 1.3rem;">정말 초기화 하시겠습니까?</p>
             <p style="font-size: 1rem; color: #888;">초기화 기록은 영원히 남습니다.</p>
-            <div class="modal-btns">
-                <button onclick="confirmReset(true)" style="border-color:#ff3333; color:#ff3333;">[Y] AGREE</button>
-                <button onclick="confirmReset(false)" style="border-color:#33ff33; color:#33ff33;">[N] DISAGREE</button>
-            </div>
+            <div class="modal-btns"><button onclick="confirmReset(true)" style="border-color:#ff3333; color:#ff3333;">[Y] AGREE</button><button onclick="confirmReset(false)" style="border-color:#33ff33; color:#33ff33;">[N] DISAGREE</button></div>
         </div>
     </div>
 
     <script>
-        /* ================= LOCAL STORAGE & SHAME ================= */
+        /* ================= EASTER EGG: MICKEY ================= */
+        const secretCode = "mickey";
+        let inputKeys = "";
+
+        window.addEventListener('keydown', (e) => {
+            inputKeys += e.key.toLowerCase();
+            if(inputKeys.length > secretCode.length) inputKeys = inputKeys.slice(-secretCode.length);
+            
+            if(inputKeys === secretCode) {
+                triggerMeteorImpact();
+                inputKeys = ""; // 중복 방지
+            }
+        });
+
+        function triggerMeteorImpact() {
+            // 1. 운석 효과 발동
+            const overlay = document.getElementById('meteor-overlay');
+            overlay.style.display = 'flex'; // flex로 중앙 정렬
+            
+            // 2. 화면 전체 흔들기
+            document.body.classList.add('shake-body');
+
+            // 3. 2.5초 후 (폭발 시점) 데이터 삭제 및 리로드
+            setTimeout(() => {
+                localStorage.clear(); // 모든 기록 삭제 (하남자 포함)
+                location.reload();
+            }, 2500);
+        }
+
+        /* ================= UTILS & LOCAL STORAGE ================= */
         function showScreen(id) {
             ['screen-start','screen-phase1','screen-phase2','screen-phase3','screen-end']
                 .forEach(s => document.getElementById(s).style.display = 'none');
@@ -245,9 +280,7 @@
 
         let failCount = parseInt(localStorage.getItem('minority_fail_count')) || 0;
         let isGameCleared = localStorage.getItem('minority_game_cleared') === 'true';
-        let resetUsedCount = parseInt(localStorage.getItem('minority_reset_used')) || 0; // 초기화 횟수
-
-        // 최고 기록
+        let resetUsedCount = parseInt(localStorage.getItem('minority_reset_used')) || 0; 
         let bestRecordNormal = parseInt(localStorage.getItem('minority_best_normal')) || 999;
         let bestRecordNightmare = parseInt(localStorage.getItem('minority_best_nightmare')) || 999;
 
@@ -256,240 +289,93 @@
         };
 
         /* ================= RESET LOGIC ================= */
-        function openResetModal() {
-            document.getElementById('reset-confirm-modal').style.display = 'flex';
-        }
-
+        function openResetModal() { document.getElementById('reset-confirm-modal').style.display = 'flex'; }
         function confirmReset(agree) {
             document.getElementById('reset-confirm-modal').style.display = 'none';
             if (agree) {
-                // 실패 횟수는 0으로 세탁
-                failCount = 0;
-                localStorage.setItem('minority_fail_count', 0);
-                
-                // 초기화 사용 횟수 증가 (박제용)
-                resetUsedCount++;
-                localStorage.setItem('minority_reset_used', resetUsedCount);
-                
-                alert("기록이 초기화되었습니다. (시스템이 당신의 선택을 기억합니다.)");
-                location.reload(); // 새로고침
+                failCount = 0; localStorage.setItem('minority_fail_count', 0);
+                resetUsedCount++; localStorage.setItem('minority_reset_used', resetUsedCount);
+                alert("기록이 초기화되었습니다. (시스템이 당신의 선택을 기억합니다.)"); location.reload();
             }
         }
 
         /* ================= RANKING ================= */
-        const fakeDataNormal = [
-            { name: "DEV_KIM", attempts: 0, date: "2024.10" },
-            { name: "UNKNOWN_01", attempts: 2, date: "2024.11" },
-            { name: "PLAYER_X", attempts: 24, date: "2024.12" },
-        ];
-        const fakeDataNightmare = [
-            { name: "DEV_KIM", attempts: 3, date: "2024.10" },
-            { name: "GOD_GAMER", attempts: 7, date: "2024.11" },
-        ];
+        const fakeDataNormal = [ { name: "DEV_KIM", attempts: 0, date: "2024.10" }, { name: "UNKNOWN_01", attempts: 2, date: "2024.11" }, { name: "PLAYER_X", attempts: 24, date: "2024.12" } ];
+        const fakeDataNightmare = [ { name: "DEV_KIM", attempts: 3, date: "2024.10" }, { name: "GOD_GAMER", attempts: 7, date: "2024.11" } ];
 
         let currentRankTab = 'legend';
         function openRanking() { document.getElementById('rank-modal').style.display = 'flex'; showRank('legend'); }
         function closeRanking() { document.getElementById('rank-modal').style.display = 'none'; }
-
         function showRank(type) {
-            currentRankTab = type;
-            document.getElementById('tab-legend').className = (type === 'legend' ? 'rank-tab active' : 'rank-tab');
-            document.getElementById('tab-god').className = (type === 'god' ? 'rank-tab active' : 'rank-tab');
-
+            currentRankTab = type; document.getElementById('tab-legend').className = (type === 'legend' ? 'rank-tab active' : 'rank-tab'); document.getElementById('tab-god').className = (type === 'god' ? 'rank-tab active' : 'rank-tab');
             let list = (type === 'legend') ? [...fakeDataNormal] : [...fakeDataNightmare];
             let userBest = (type === 'legend') ? bestRecordNormal : bestRecordNightmare;
             let userIncluded = false;
-
-            if (userBest < 999) {
-                list.push({ name: "YOU", attempts: userBest, date: "TODAY", isUser: true });
-                userIncluded = true;
-            }
+            if (userBest < 999) { list.push({ name: "YOU", attempts: userBest, date: "TODAY", isUser: true }); userIncluded = true; }
             list.sort((a, b) => a.attempts - b.attempts);
-
-            const tbody = document.getElementById('rank-tbody');
-            tbody.innerHTML = "";
+            const tbody = document.getElementById('rank-tbody'); tbody.innerHTML = "";
             if (list.length === 0 && !userIncluded) { tbody.innerHTML = "<tr><td colspan='4'>NO DATA</td></tr>"; return; }
-
-            list.forEach((item, index) => {
-                const tr = document.createElement('tr');
-                if (item.isUser) tr.className = "rank-user";
-                tr.innerHTML = `<td>${index + 1}</td><td>${item.name}</td><td>${item.attempts} FAILS</td><td>${item.date}</td>`;
-                tbody.appendChild(tr);
-            });
+            list.forEach((item, index) => { const tr = document.createElement('tr'); if (item.isUser) tr.className = "rank-user"; tr.innerHTML = `<td>${index + 1}</td><td>${item.name}</td><td>${item.attempts} FAILS</td><td>${item.date}</td>`; tbody.appendChild(tr); });
         }
-
         function saveRecord(isNightmare) {
-            // 초기화를 쓴 사람은 랭킹 저장은 해주되, 영광스럽진 않음
-            if (!isNightmare) {
-                if (failCount < bestRecordNormal) { bestRecordNormal = failCount; localStorage.setItem('minority_best_normal', bestRecordNormal); }
-            } else {
-                if (failCount < bestRecordNightmare) { bestRecordNightmare = failCount; localStorage.setItem('minority_best_nightmare', bestRecordNightmare); }
-            }
+            if (!isNightmare) { if (failCount < bestRecordNormal) { bestRecordNormal = failCount; localStorage.setItem('minority_best_normal', bestRecordNormal); } }
+            else { if (failCount < bestRecordNightmare) { bestRecordNightmare = failCount; localStorage.setItem('minority_best_nightmare', bestRecordNightmare); } }
         }
 
         /* ================= GAME LOGIC ================= */
-        let gameMode = 'normal'; 
-        let chaosModeActive = false;
-        let frameVelocity = { x: 1.2, y: 1.2 }; 
-        let framePos = { x: 0, y: 0 }; 
-
+        let gameMode = 'normal'; let chaosModeActive = false; let frameVelocity = { x: 1.2, y: 1.2 }; let framePos = { x: 0, y: 0 }; 
         function startNightmare() { gameMode = 'nightmare'; startPhase3(); }
 
-        const questions = [
-            { q: "비 오는 날이 맑은 날보다 좋다.", rate: 80 }, 
-            { q: "10억 받기 vs 말하는 고양이 키우기", rate: 20 },
-            { q: "솔직히 탕수육은 부먹이다.", rate: 45 },
-        ];
+        const questions = [ { q: "비 오는 날이 맑은 날보다 좋다.", rate: 80 }, { q: "10억 받기 vs 말하는 고양이 키우기", rate: 20 }, { q: "솔직히 탕수육은 부먹이다.", rate: 45 } ];
         let p1Idx = 0;
-
         function startPhase1() { gameMode = 'normal'; showScreen('screen-phase1'); document.getElementById('stage-display').innerText = "1 - MINORITY"; renderP1(); }
-        function renderP1() {
-            const q = questions[p1Idx]; document.getElementById('p1-text').innerText = q.q;
-            document.getElementById('p1-btns').style.display = 'flex'; document.getElementById('bar-bg').style.display = 'none';
-            document.getElementById('next-btn').style.display = 'none'; document.getElementById('p1-msg').innerText = ""; document.getElementById('bar-fill').style.width = "0%";
-        }
-        function checkP1(agree) {
-            const q = questions[p1Idx]; const rate = agree ? q.rate : (100 - q.rate);
-            document.getElementById('p1-btns').style.display = 'none'; document.getElementById('bar-bg').style.display = 'block';
-            setTimeout(() => document.getElementById('bar-fill').style.width = rate + "%", 50);
-            if (rate < 50) { document.getElementById('p1-msg').innerText = `생존. 소수(${rate}%)입니다.`; document.getElementById('next-btn').style.display = 'inline-block'; }
-            else { failGame("MAJORITY DETECTED", "당신은 다수에 속했습니다."); }
-        }
+        function renderP1() { const q = questions[p1Idx]; document.getElementById('p1-text').innerText = q.q; document.getElementById('p1-btns').style.display = 'flex'; document.getElementById('bar-bg').style.display = 'none'; document.getElementById('next-btn').style.display = 'none'; document.getElementById('p1-msg').innerText = ""; document.getElementById('bar-fill').style.width = "0%"; }
+        function checkP1(agree) { const q = questions[p1Idx]; const rate = agree ? q.rate : (100 - q.rate); document.getElementById('p1-btns').style.display = 'none'; document.getElementById('bar-bg').style.display = 'block'; setTimeout(() => document.getElementById('bar-fill').style.width = rate + "%", 50); if (rate < 50) { document.getElementById('p1-msg').innerText = `생존. 소수(${rate}%)입니다.`; document.getElementById('next-btn').style.display = 'inline-block'; } else { failGame("MAJORITY DETECTED", "당신은 다수에 속했습니다."); } }
         function nextPhase1() { p1Idx++; if (p1Idx >= questions.length) startPhase2(); else renderP1(); }
 
-        /* PHASE 2 */
         let p2Score = 0; let p2TimerInterval; let p2Time = 100;
         function startPhase2() { setTheme('red'); document.getElementById('stage-display').innerText = "2 - HACKING"; document.getElementById('status-display').innerText = "WARNING"; showScreen('screen-phase2'); nextP2(); }
-        function nextP2() {
-            if (p2Score >= 3) { clearInterval(p2TimerInterval); startPhase3(); return; }
-            const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"; let code = ""; for(let i=0; i<4; i++) code += chars.charAt(Math.floor(Math.random()*chars.length));
-            document.getElementById('p2-code').innerText = code; document.getElementById('p2-input').value = ""; document.getElementById('p2-input').focus();
-            p2Time = 100; clearInterval(p2TimerInterval);
-            p2TimerInterval = setInterval(() => { p2Time -= 1.5; document.getElementById('p2-timer').style.width = p2Time + "%"; if (p2Time <= 0) { clearInterval(p2TimerInterval); failGame("SYSTEM HACKED", "방화벽이 뚫렸습니다."); } }, 50);
-        }
-        function checkP2(e) {
-            if (e.key === "Enter") {
-                if (document.getElementById('p2-code').innerText === document.getElementById('p2-input').value.toUpperCase()) { p2Score++; document.getElementById('p2-info').innerText = `DEFENSE: ${p2Score} / 3`; nextP2(); } else { document.getElementById('p2-input').value = ""; }
-            }
-        }
+        function nextP2() { if (p2Score >= 3) { clearInterval(p2TimerInterval); startPhase3(); return; } const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"; let code = ""; for(let i=0; i<4; i++) code += chars.charAt(Math.floor(Math.random()*chars.length)); document.getElementById('p2-code').innerText = code; document.getElementById('p2-input').value = ""; document.getElementById('p2-input').focus(); p2Time = 100; clearInterval(p2TimerInterval); p2TimerInterval = setInterval(() => { p2Time -= 1.5; document.getElementById('p2-timer').style.width = p2Time + "%"; if (p2Time <= 0) { clearInterval(p2TimerInterval); failGame("SYSTEM HACKED", "방화벽이 뚫렸습니다."); } }, 50); }
+        function checkP2(e) { if (e.key === "Enter") { if (document.getElementById('p2-code').innerText === document.getElementById('p2-input').value.toUpperCase()) { p2Score++; document.getElementById('p2-info').innerText = `DEFENSE: ${p2Score} / 3`; nextP2(); } else { document.getElementById('p2-input').value = ""; } } }
 
-        /* ================= PHASE 3 ================= */
         const canvas = document.getElementById('gameCanvas'); const ctx = canvas.getContext('2d'); let gameLoopId;
         let p3TotalTime = 45.00; let player = { x: 300, y: 175, size: 10, color: '#fff' }; let enemies = []; let warnings = []; let gameState = 'ready'; let currentPhase = 'green'; let countdownNum = 3;
         let typeWriterIdx = 0; let typeWriterText = ""; let typeWriterInterval;
 
-        function startPhase3() {
-            showScreen('screen-phase3'); enemies = []; warnings = []; gameState = 'ready'; countdownNum = 3; chaosModeActive = false;
-            const frame = document.getElementById('game-frame'); frame.style.position = 'relative'; frame.style.left = 'auto'; frame.style.top = 'auto'; frame.classList.remove('chaos-shake'); document.body.style.display = 'flex'; 
-            if (gameMode === 'nightmare') { document.getElementById('stage-display').innerText = "☠ NIGHTMARE ☠"; setTheme('nightmare'); p3TotalTime = 60.00; currentPhase = 'nightmare'; }
-            else { document.getElementById('stage-display').innerText = "3 - SURVIVAL"; setTheme('green'); p3TotalTime = 45.00; currentPhase = 'green'; }
-            document.getElementById('dodge-timer').innerText = "READY..."; document.getElementById('break-overlay').style.display = 'none';
-            canvas.addEventListener('mousemove', (e) => { const rect = canvas.getBoundingClientRect(); player.x = e.clientX - rect.left; player.y = e.clientY - rect.top; });
-            const countInterval = setInterval(() => { if (countdownNum > 0) { document.getElementById('dodge-timer').innerText = `START IN ${countdownNum}...`; countdownNum--; } else { clearInterval(countInterval); gameState = 'playing'; } }, 1000);
-            if(gameLoopId) cancelAnimationFrame(gameLoopId); gameLoopId = requestAnimationFrame(gameLoop);
-        }
-
-        function startTyping(text) {
-            const overlay = document.getElementById('break-overlay'); overlay.style.display = 'block'; overlay.innerText = ""; typeWriterText = text; typeWriterIdx = 0;
-            clearInterval(typeWriterInterval); typeWriterInterval = setInterval(() => { if (typeWriterIdx < typeWriterText.length) { overlay.innerText += typeWriterText.charAt(typeWriterIdx); typeWriterIdx++; } else { clearInterval(typeWriterInterval); } }, 100);
-        }
-
-        function updateChaosFrame() {
-            const frame = document.getElementById('game-frame');
-            if (!chaosModeActive) { chaosModeActive = true; const rect = frame.getBoundingClientRect(); framePos.x = rect.left; framePos.y = rect.top; document.body.style.display = 'block'; frame.style.position = 'absolute'; frame.style.margin = '0'; frame.style.left = framePos.x + 'px'; frame.style.top = framePos.y + 'px'; setTheme('chaos'); frame.classList.add('chaos-shake'); document.getElementById('status-display').innerText = "ERROR!!"; }
-            framePos.x += frameVelocity.x; framePos.y += frameVelocity.y;
-            if (framePos.x <= 0 || framePos.x + frame.offsetWidth >= window.innerWidth) frameVelocity.x *= -1;
-            if (framePos.y <= 0 || framePos.y + frame.offsetHeight >= window.innerHeight) frameVelocity.y *= -1;
-            frame.style.left = framePos.x + 'px'; frame.style.top = framePos.y + 'px';
-        }
+        function startPhase3() { showScreen('screen-phase3'); enemies = []; warnings = []; gameState = 'ready'; countdownNum = 3; chaosModeActive = false; const frame = document.getElementById('game-frame'); frame.style.position = 'relative'; frame.style.left = 'auto'; frame.style.top = 'auto'; frame.classList.remove('chaos-shake'); document.body.style.display = 'flex'; if (gameMode === 'nightmare') { document.getElementById('stage-display').innerText = "☠ NIGHTMARE ☠"; setTheme('nightmare'); p3TotalTime = 60.00; currentPhase = 'nightmare'; } else { document.getElementById('stage-display').innerText = "3 - SURVIVAL"; setTheme('green'); p3TotalTime = 45.00; currentPhase = 'green'; } document.getElementById('dodge-timer').innerText = "READY..."; document.getElementById('break-overlay').style.display = 'none'; canvas.addEventListener('mousemove', (e) => { const rect = canvas.getBoundingClientRect(); player.x = e.clientX - rect.left; player.y = e.clientY - rect.top; }); const countInterval = setInterval(() => { if (countdownNum > 0) { document.getElementById('dodge-timer').innerText = `START IN ${countdownNum}...`; countdownNum--; } else { clearInterval(countInterval); gameState = 'playing'; } }, 1000); if(gameLoopId) cancelAnimationFrame(gameLoopId); gameLoopId = requestAnimationFrame(gameLoop); }
+        function startTyping(text) { const overlay = document.getElementById('break-overlay'); overlay.style.display = 'block'; overlay.innerText = ""; typeWriterText = text; typeWriterIdx = 0; clearInterval(typeWriterInterval); typeWriterInterval = setInterval(() => { if (typeWriterIdx < typeWriterText.length) { overlay.innerText += typeWriterText.charAt(typeWriterIdx); typeWriterIdx++; } else { clearInterval(typeWriterInterval); } }, 100); }
+        function updateChaosFrame() { const frame = document.getElementById('game-frame'); if (!chaosModeActive) { chaosModeActive = true; const rect = frame.getBoundingClientRect(); framePos.x = rect.left; framePos.y = rect.top; document.body.style.display = 'block'; frame.style.position = 'absolute'; frame.style.margin = '0'; frame.style.left = framePos.x + 'px'; frame.style.top = framePos.y + 'px'; setTheme('chaos'); frame.classList.add('chaos-shake'); document.getElementById('status-display').innerText = "ERROR!!"; } framePos.x += frameVelocity.x; framePos.y += frameVelocity.y; if (framePos.x <= 0 || framePos.x + frame.offsetWidth >= window.innerWidth) frameVelocity.x *= -1; if (framePos.y <= 0 || framePos.y + frame.offsetHeight >= window.innerHeight) frameVelocity.y *= -1; frame.style.left = framePos.x + 'px'; frame.style.top = framePos.y + 'px'; }
 
         function gameLoop() {
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = (gameMode === 'nightmare') ? "#b026ff" : "#ffffff"; if(chaosModeActive) ctx.fillStyle = "#00ffea";
-            ctx.shadowBlur = 10; ctx.shadowColor = ctx.fillStyle; ctx.fillRect(player.x - player.size/2, player.y - player.size/2, player.size, player.size); ctx.shadowBlur = 0;
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)'; ctx.fillRect(0, 0, canvas.width, canvas.height); ctx.fillStyle = (gameMode === 'nightmare') ? "#b026ff" : "#ffffff"; if(chaosModeActive) ctx.fillStyle = "#00ffea"; ctx.shadowBlur = 10; ctx.shadowColor = ctx.fillStyle; ctx.fillRect(player.x - player.size/2, player.y - player.size/2, player.size, player.size); ctx.shadowBlur = 0;
             if (gameState === 'ready') { ctx.fillStyle = "#ffffff"; ctx.font = "40px VT323"; ctx.textAlign = "center"; ctx.fillText(countdownNum > 0 ? countdownNum : "GO!", canvas.width/2, canvas.height/2); gameLoopId = requestAnimationFrame(gameLoop); return; }
             p3TotalTime -= 0.016; document.getElementById('dodge-timer').innerText = p3TotalTime.toFixed(2);
             if (gameMode === 'nightmare') { if (p3TotalTime <= 30) { updateChaosFrame(); } if (p3TotalTime <= 0) { cancelAnimationFrame(gameLoopId); gameClear(); return; } }
-            else {
-                let newPhase = currentPhase;
-                if (p3TotalTime > 30) newPhase = 'green'; else if (p3TotalTime > 25) newPhase = 'break1'; else if (p3TotalTime > 10) newPhase = 'yellow'; else if (p3TotalTime > 5) newPhase = 'break2'; else if (p3TotalTime > 0) newPhase = 'red'; else { cancelAnimationFrame(gameLoopId); gameClear(); return; }
-                if (newPhase !== currentPhase) {
-                    currentPhase = newPhase;
-                    if (currentPhase === 'break1') { setTheme('break'); enemies=[]; warnings=[]; startTyping("SYSTEM UPGRADE..."); }
-                    else if (currentPhase === 'break2') { setTheme('break'); enemies=[]; warnings=[]; startTyping("당신은 과연 이 이상을 깰 수 있을까?"); }
-                    else if (currentPhase === 'green') { setTheme('green'); document.getElementById('break-overlay').style.display='none'; }
-                    else if (currentPhase === 'yellow') { setTheme('yellow'); document.getElementById('break-overlay').style.display='none'; }
-                    else if (currentPhase === 'red') { setTheme('red'); document.getElementById('break-overlay').style.display='none'; }
-                }
-            }
+            else { let newPhase = currentPhase; if (p3TotalTime > 30) newPhase = 'green'; else if (p3TotalTime > 25) newPhase = 'break1'; else if (p3TotalTime > 10) newPhase = 'yellow'; else if (p3TotalTime > 5) newPhase = 'break2'; else if (p3TotalTime > 0) newPhase = 'red'; else { cancelAnimationFrame(gameLoopId); gameClear(); return; } if (newPhase !== currentPhase) { currentPhase = newPhase; if (currentPhase === 'break1') { setTheme('break'); enemies=[]; warnings=[]; startTyping("SYSTEM UPGRADE..."); } else if (currentPhase === 'break2') { setTheme('break'); enemies=[]; warnings=[]; startTyping("당신은 과연 이 이상을 깰 수 있을까?"); } else if (currentPhase === 'green') { setTheme('green'); document.getElementById('break-overlay').style.display='none'; } else if (currentPhase === 'yellow') { setTheme('yellow'); document.getElementById('break-overlay').style.display='none'; } else if (currentPhase === 'red') { setTheme('red'); document.getElementById('break-overlay').style.display='none'; } } }
             if (!currentPhase.includes('break')) spawnPattern(currentPhase);
-            for (let i = warnings.length - 1; i >= 0; i--) {
-                let w = warnings[i]; w.timer--;
-                if (w.timer > 0) { ctx.save(); ctx.beginPath(); ctx.setLineDash([10, 10]); let warnColor = "#ffcc00"; if(gameMode === 'nightmare') warnColor = "#b026ff"; if(chaosModeActive) warnColor = "#00ffea"; ctx.strokeStyle = (Math.floor(Date.now()/50)%2===0) ? warnColor : "#222"; ctx.lineWidth = 2; ctx.moveTo(w.x, 0); ctx.lineTo(w.x, canvas.height); ctx.stroke(); ctx.restore(); }
-                else { let speed = (currentPhase === 'red') ? 6 : 5; if (gameMode === 'nightmare') speed = 5.5; let color = '#ff0000'; if (gameMode === 'nightmare') color = '#b026ff'; if (chaosModeActive) color = '#00ffea'; enemies.push({ x: w.x - (w.width/2), y: -50, size: w.width, speed: speed, type: 'blitz', color: color }); warnings.splice(i, 1); }
-            }
-            for (let i = 0; i < enemies.length; i++) {
-                let e = enemies[i]; e.y += e.speed; ctx.fillStyle = e.color; let height = (e.type === 'blitz') ? canvas.height : e.size; ctx.fillRect(e.x, e.y, e.size, height);
-                if (player.x < e.x + e.size && player.x + player.size > e.x && player.y < e.y + height && player.y + player.size > e.y) { cancelAnimationFrame(gameLoopId); failGame("KILLED", "생존에 실패했습니다."); return; }
-            }
+            for (let i = warnings.length - 1; i >= 0; i--) { let w = warnings[i]; w.timer--; if (w.timer > 0) { ctx.save(); ctx.beginPath(); ctx.setLineDash([10, 10]); let warnColor = "#ffcc00"; if(gameMode === 'nightmare') warnColor = "#b026ff"; if(chaosModeActive) warnColor = "#00ffea"; ctx.strokeStyle = (Math.floor(Date.now()/50)%2===0) ? warnColor : "#222"; ctx.lineWidth = 2; ctx.moveTo(w.x, 0); ctx.lineTo(w.x, canvas.height); ctx.stroke(); ctx.restore(); } else { let speed = (currentPhase === 'red') ? 6 : 5; if (gameMode === 'nightmare') speed = 5.5; let color = '#ff0000'; if (gameMode === 'nightmare') color = '#b026ff'; if (chaosModeActive) color = '#00ffea'; enemies.push({ x: w.x - (w.width/2), y: -50, size: w.width, speed: speed, type: 'blitz', color: color }); warnings.splice(i, 1); } }
+            for (let i = 0; i < enemies.length; i++) { let e = enemies[i]; e.y += e.speed; ctx.fillStyle = e.color; let height = (e.type === 'blitz') ? canvas.height : e.size; ctx.fillRect(e.x, e.y, e.size, height); if (player.x < e.x + e.size && player.x + player.size > e.x && player.y < e.y + height && player.y + player.size > e.y) { cancelAnimationFrame(gameLoopId); failGame("KILLED", "생존에 실패했습니다."); return; } }
             if (enemies.length > 50) enemies.shift();
             gameLoopId = requestAnimationFrame(gameLoop);
         }
 
         function spawnPattern(phase) {
-            if (gameMode === 'nightmare') {
-                let spawnRateWarn = 0.025; let spawnRateEnemy = 0.04;
-                if (Math.random() < spawnRateWarn) warnings.push({ x: Math.random() * canvas.width, width: 30, timer: 90, active: true });
-                if (Math.random() < spawnRateEnemy) enemies.push({ x: Math.random() * canvas.width, y: -20, size: Math.random() * 15 + 10, speed: 4, type: 'normal', color: chaosModeActive ? '#00ffea' : '#b026ff' });
-                return;
-            }
+            if (gameMode === 'nightmare') { let spawnRateWarn = 0.025; let spawnRateEnemy = 0.04; if (Math.random() < spawnRateWarn) warnings.push({ x: Math.random() * canvas.width, width: 30, timer: 90, active: true }); if (Math.random() < spawnRateEnemy) enemies.push({ x: Math.random() * canvas.width, y: -20, size: Math.random() * 15 + 10, speed: 4, type: 'normal', color: chaosModeActive ? '#00ffea' : '#b026ff' }); return; }
             if (phase === 'green') { if (Math.random() < 0.05) enemies.push({ x: Math.random() * canvas.width, y: -20, size: Math.random() * 15 + 10, speed: (Math.random() * 2 + 1), type: 'normal', color: '#33ff33' }); }
             else if (phase === 'yellow') { if (Math.random() < 0.04) warnings.push({ x: Math.random() * canvas.width, width: 25, timer: 90, active: true }); }
             else if (phase === 'red') { if (Math.random() < 0.05) warnings.push({ x: Math.random() * canvas.width, width: 30, timer: 100, active: true }); if (Math.random() < 0.08) enemies.push({ x: Math.random() * canvas.width, y: -20, size: Math.random() * 15 + 10, speed: (Math.random() * 2 + 2), type: 'normal', color: '#ff3333' }); }
         }
 
-        /* ================= GAME OVER / ENDING ================= */
-        function failGame(title, desc) {
-            failCount++; localStorage.setItem('minority_fail_count', failCount);
-            showScreen('screen-end'); setTheme('red'); document.getElementById('end-canvas').style.display = 'none';
-            document.getElementById('end-title').innerText = title; document.getElementById('end-title').className = "big-msg"; document.getElementById('end-title').style.color = "red"; document.getElementById('end-desc').innerText = desc;
-            document.getElementById('shame-display').style.display = 'none';
-            if (failCount >= 5) document.getElementById('skip-btn').style.display = 'inline-block'; else document.getElementById('skip-btn').style.display = 'none';
-            clearInterval(p2TimerInterval); if(gameLoopId) cancelAnimationFrame(gameLoopId);
-        }
-
-        function skipToEnding() {
-            localStorage.removeItem('minority_fail_count'); showScreen('screen-end'); setTheme('gray'); document.getElementById('end-canvas').style.display = 'none'; document.getElementById('skip-btn').style.display = 'none'; document.getElementById('end-title').innerText = "SKIPPED"; document.getElementById('end-title').className = "big-msg"; document.getElementById('end-title').style.color = "#888"; document.getElementById('end-desc').innerText = "평범한 결말입니다. 다시 도전하시겠습니까?";
-        }
-
+        function failGame(title, desc) { failCount++; localStorage.setItem('minority_fail_count', failCount); showScreen('screen-end'); setTheme('red'); document.getElementById('end-canvas').style.display = 'none'; document.getElementById('end-title').innerText = title; document.getElementById('end-title').className = "big-msg"; document.getElementById('end-title').style.color = "red"; document.getElementById('end-desc').innerText = desc; document.getElementById('shame-display').style.display = 'none'; if (failCount >= 5) document.getElementById('skip-btn').style.display = 'inline-block'; else document.getElementById('skip-btn').style.display = 'none'; clearInterval(p2TimerInterval); if(gameLoopId) cancelAnimationFrame(gameLoopId); }
+        function skipToEnding() { localStorage.removeItem('minority_fail_count'); showScreen('screen-end'); setTheme('gray'); document.getElementById('end-canvas').style.display = 'none'; document.getElementById('skip-btn').style.display = 'none'; document.getElementById('end-title').innerText = "SKIPPED"; document.getElementById('end-title').className = "big-msg"; document.getElementById('end-title').style.color = "#888"; document.getElementById('end-desc').innerText = "평범한 결말입니다. 다시 도전하시겠습니까?"; }
         function gameClear() {
-            saveRecord(gameMode === 'nightmare');
-            localStorage.removeItem('minority_fail_count');
-            failCount = 0;
-            if (gameMode === 'normal') localStorage.setItem('minority_game_cleared', 'true');
-
-            showScreen('screen-end'); document.getElementById('skip-btn').style.display = 'none'; document.getElementById('end-canvas').style.display = 'block';
-            const titleEl = document.getElementById('end-title'); const descEl = document.getElementById('end-desc'); const statusEl = document.getElementById('status-display');
-            const shameEl = document.getElementById('shame-display');
-
-            // 초기화 사용 여부 체크 (하남자 판독)
-            if (resetUsedCount > 0) {
-                setTheme('coward'); // 하남자 테마 (갈색)
-                titleEl.innerText = "COWARD";
-                titleEl.style.color = "#cd853f";
-                descEl.innerText = "당신은 기록을 세탁했습니다.";
-                statusEl.innerText = "COWARD";
-                shameEl.style.display = 'inline-block';
-                shameEl.innerText = `RESET USED: ${resetUsedCount} TIMES`;
-            } else {
-                shameEl.style.display = 'none'; // 클린 유저
-                if (gameMode === 'nightmare') { setTheme('chaos'); titleEl.innerText = "GOD MODE"; titleEl.style.color = "#00ffea"; descEl.innerText = "당신은 악몽을 지배했습니다."; statusEl.innerText = "GOD"; }
-                else { setTheme('clear'); titleEl.innerText = "ALL CLEAR"; titleEl.style.color = "#00ffff"; descEl.innerText = "축하합니다. 모든 테스트를 통과했습니다."; statusEl.innerText = "LEGEND"; }
-            }
+            saveRecord(gameMode === 'nightmare'); localStorage.removeItem('minority_fail_count'); failCount = 0; if (gameMode === 'normal') localStorage.setItem('minority_game_cleared', 'true');
+            showScreen('screen-end'); document.getElementById('skip-btn').style.display = 'none'; document.getElementById('end-canvas').style.display = 'block'; const titleEl = document.getElementById('end-title'); const descEl = document.getElementById('end-desc'); const statusEl = document.getElementById('status-display'); const shameEl = document.getElementById('shame-display');
+            if (resetUsedCount > 0) { setTheme('coward'); titleEl.innerText = "COWARD"; titleEl.style.color = "#cd853f"; descEl.innerText = "당신은 기록을 세탁했습니다."; statusEl.innerText = "COWARD"; shameEl.style.display = 'inline-block'; shameEl.innerText = `RESET USED: ${resetUsedCount} TIMES`; }
+            else { shameEl.style.display = 'none'; if (gameMode === 'nightmare') { setTheme('chaos'); titleEl.innerText = "GOD MODE"; titleEl.style.color = "#00ffea"; descEl.innerText = "당신은 악몽을 지배했습니다."; statusEl.innerText = "GOD"; } else { setTheme('clear'); titleEl.innerText = "ALL CLEAR"; titleEl.style.color = "#00ffff"; descEl.innerText = "축하합니다. 모든 테스트를 통과했습니다."; statusEl.innerText = "LEGEND"; } }
             titleEl.className = "shine-text"; startFireworks();
         }
 
-        /* FIREWORKS */
         let fireworks = [], particles = [], endCtx, endCanvas;
         function startFireworks() { endCanvas = document.getElementById('end-canvas'); endCtx = endCanvas.getContext('2d'); endCanvas.width = endCanvas.offsetWidth; endCanvas.height = endCanvas.offsetHeight; fireworks = []; particles = []; loopFireworks(); }
         function loopFireworks() {
