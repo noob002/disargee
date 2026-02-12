@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>THE MINORITY: SYSTEM BREACH</title>
+    <title>THE MINORITY: FINAL PROTOCOL</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
 
         :root {
-            --main-color: #33ff33; /* 기본 초록색 */
+            --main-color: #33ff33; /* 초기 초록색 */
             --danger-color: #ff3333; /* 위험 빨간색 */
             --bg-color: #050505;
         }
@@ -25,47 +25,33 @@
             overflow: hidden;
             text-transform: uppercase;
             user-select: none;
+            transition: 0.5s;
         }
 
-        /* 상태에 따른 색상 변경 클래스 */
+        /* 위험 모드 (빨간색 테마) */
         body.red-mode {
             --main-color: var(--danger-color);
-            animation: shake 0.5s; /* 전환 시 화면 흔들림 */
-        }
-
-        @keyframes shake {
-            0% { transform: translate(1px, 1px) rotate(0deg); }
-            10% { transform: translate(-1px, -2px) rotate(-1deg); }
-            20% { transform: translate(-3px, 0px) rotate(1deg); }
-            30% { transform: translate(3px, 2px) rotate(0deg); }
-            40% { transform: translate(1px, -1px) rotate(1deg); }
-            50% { transform: translate(-1px, 2px) rotate(-1deg); }
-            60% { transform: translate(-3px, 1px) rotate(0deg); }
-            70% { transform: translate(3px, 1px) rotate(-1deg); }
-            80% { transform: translate(-1px, -1px) rotate(1deg); }
-            90% { transform: translate(1px, 2px) rotate(0deg); }
-            100% { transform: translate(1px, -2px) rotate(-1deg); }
         }
 
         .crt-frame {
             border: 4px solid var(--main-color);
-            padding: 40px;
+            padding: 30px;
             width: 700px;
-            max-width: 90%;
-            height: 500px; /* 고정 높이 */
-            box-shadow: 0 0 20px var(--main-color), inset 0 0 30px rgba(0,0,0,0.8);
+            max-width: 95%;
+            height: 550px;
+            box-shadow: 0 0 20px var(--main-color), inset 0 0 50px rgba(0,0,0,0.8);
             background-color: var(--bg-color);
             position: relative;
             display: flex;
             flex-direction: column;
-            transition: border-color 1s, box-shadow 1s;
+            transition: border-color 0.5s, box-shadow 0.5s;
         }
 
-        /* 스캔라인 (CRT 효과) */
+        /* 스캔라인 효과 */
         .scanline {
             width: 100%;
             height: 100px;
-            background: linear-gradient(0deg, rgba(0,0,0,0) 0%, rgba(255, 255, 255, 0.04) 50%, rgba(0,0,0,0) 100%);
+            background: linear-gradient(0deg, rgba(0,0,0,0) 0%, rgba(255, 255, 255, 0.03) 50%, rgba(0,0,0,0) 100%);
             opacity: 0.1;
             position: absolute;
             bottom: 100%;
@@ -73,13 +59,9 @@
             pointer-events: none;
             z-index: 999;
         }
+        @keyframes scanline { 0% { bottom: 100%; } 100% { bottom: -100%; } }
 
-        @keyframes scanline {
-            0% { bottom: 100%; }
-            100% { bottom: -100%; }
-        }
-
-        /* 공통 UI 요소 */
+        /* UI 공통 */
         .header {
             display: flex;
             justify-content: space-between;
@@ -88,7 +70,6 @@
             margin-bottom: 20px;
             font-size: 1.4rem;
         }
-
         .content-area {
             flex: 1;
             display: flex;
@@ -96,8 +77,10 @@
             justify-content: center;
             align-items: center;
             position: relative;
+            width: 100%;
         }
 
+        /* 버튼 스타일 */
         button {
             background: transparent;
             border: 2px solid var(--main-color);
@@ -106,84 +89,45 @@
             font-size: 1.8rem;
             padding: 10px 20px;
             cursor: pointer;
-            transition: 0.2s;
             margin: 10px;
+            transition: 0.2s;
         }
+        button:hover { background-color: var(--main-color); color: #000; }
 
-        button:hover {
-            background-color: var(--main-color);
-            color: #000;
-        }
-
-        /* --- SCREEN: START --- */
-        #screen-start { text-align: center; }
-        .blink { animation: blink 1s infinite; }
-        @keyframes blink { 50% { opacity: 0; } }
-
-        /* --- SCREEN: PHASE 1 (소수결) --- */
+        /* PHASE 1: 소수결 */
         #screen-phase1 { display: none; width: 100%; text-align: center; }
-        .question-text {
-            font-size: 2rem;
-            min-height: 80px;
-            margin-bottom: 30px;
-        }
-        .btn-group { display: flex; width: 100%; gap: 20px; }
-        .btn-group button { flex: 1; }
-        
-        .result-bar-bg {
-            width: 100%;
-            height: 20px;
-            background: #111;
-            border: 1px solid var(--main-color);
-            margin-top: 20px;
-            display: none;
-        }
-        .result-bar-fill {
-            height: 100%;
-            background: var(--main-color);
-            width: 0%;
-            transition: width 0.8s ease-out;
-        }
+        .question-text { font-size: 2rem; min-height: 80px; margin-bottom: 30px; }
+        .result-bar-bg { width: 100%; height: 20px; background: #111; border: 1px solid var(--main-color); margin-top: 20px; display: none; }
+        .result-bar-fill { height: 100%; background: var(--main-color); width: 0%; transition: width 0.5s; }
 
-        /* --- SCREEN: PHASE 2 (해킹) --- */
+        /* PHASE 2: 해킹 */
         #screen-phase2 { display: none; width: 100%; text-align: center; }
-        .code-box {
-            font-size: 4rem;
-            letter-spacing: 15px;
-            margin: 20px 0;
-            border: 2px dashed var(--main-color);
-            padding: 20px;
-            background: rgba(255, 51, 51, 0.1);
+        .code-box { font-size: 4rem; letter-spacing: 15px; margin: 20px 0; border: 2px dashed var(--main-color); padding: 20px; }
+        .hack-input { background: transparent; border: none; border-bottom: 3px solid var(--main-color); color: var(--main-color); font-size: 2.5rem; text-align: center; width: 80%; outline: none; text-transform: uppercase; }
+        .timer-bg { width: 100%; height: 10px; background: #330000; margin-top: 30px; }
+        .timer-fill { width: 100%; height: 100%; background: #ff3333; }
+
+        /* PHASE 3: 탄막 회피 (DODGE) */
+        #screen-phase3 { display: none; width: 100%; height: 100%; text-align: center; }
+        canvas {
+            border: 2px solid var(--main-color);
+            background: #000;
+            cursor: none; /* 마우스 커서 숨김 */
+            display: block;
+            margin: 0 auto;
         }
-        .hack-input {
-            background: transparent;
-            border: none;
-            border-bottom: 3px solid var(--main-color);
-            color: var(--main-color);
-            font-family: 'VT323', monospace;
-            font-size: 2.5rem;
-            text-align: center;
-            width: 80%;
-            outline: none;
-            text-transform: uppercase;
-        }
-        .timer-bg {
-            width: 100%;
-            height: 10px;
-            background: #330000;
-            margin-top: 30px;
-        }
-        .timer-fill {
-            width: 100%;
-            height: 100%;
-            background: #ff3333;
+        .survival-timer {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: #ff3333;
         }
 
-        /* --- SCREEN: END --- */
+        /* END SCREEN */
         #screen-end { display: none; text-align: center; }
         .big-msg { font-size: 4rem; margin: 0; }
-        .sub-msg { font-size: 1.5rem; margin-top: 10px; color: #888; }
 
+        .blink { animation: blink 1s infinite; }
+        @keyframes blink { 50% { opacity: 0; } }
     </style>
 </head>
 <body>
@@ -191,95 +135,79 @@
 
     <div class="crt-frame">
         <div class="header">
-            <span>STAGE: <span id="stage-display">WAITING</span></span>
-            <span>STATUS: <span id="status-display">CONNECTED</span></span>
+            <span>LEVEL: <span id="stage-display">WAITING</span></span>
+            <span>STATUS: <span id="status-display">OK</span></span>
         </div>
 
         <div class="content-area">
-            
-            <div id="screen-start">
-                <h1 style="font-size: 3rem; margin-bottom: 5px;">THE MINORITY</h1>
-                <p style="margin-bottom: 40px;">당신은 소수에 속해야 살아남습니다.</p>
-                <button onclick="startGame()" class="blink">>> SYSTEM BOOT <<</button>
+            <div id="screen-start" style="text-align: center;">
+                <h1 style="font-size: 3rem;">THE MINORITY</h1>
+                <p>3단계의 테스트를 통과하십시오.</p>
+                <button onclick="startPhase1()" class="blink">SYSTEM START</button>
             </div>
 
             <div id="screen-phase1">
                 <div class="question-text" id="p1-text"></div>
-                
-                <div class="btn-group" id="p1-btns">
-                    <button onclick="checkAnswer(true)">[Y] AGREE</button>
-                    <button onclick="checkAnswer(false)">[N] DISAGREE</button>
+                <div id="p1-btns" style="display: flex; gap: 20px; justify-content: center;">
+                    <button onclick="checkP1(true)">[Y] AGREE</button>
+                    <button onclick="checkP1(false)">[N] DISAGREE</button>
                 </div>
-
                 <div id="p1-result">
-                    <div class="result-bar-bg" id="bar-bg">
-                        <div class="result-bar-fill" id="bar-fill"></div>
-                    </div>
-                    <p id="p1-msg" style="height: 30px; margin-top: 15px;"></p>
-                    <button id="next-btn" onclick="nextPhase1()" style="display:none; width:100%; margin: 20px 0;">NEXT SEQUENCE >></button>
+                    <div class="result-bar-bg" id="bar-bg"><div class="result-bar-fill" id="bar-fill"></div></div>
+                    <p id="p1-msg" style="margin-top:15px; height: 30px;"></p>
+                    <button id="next-btn" onclick="nextPhase1()" style="display:none; width:100%;">NEXT >></button>
                 </div>
             </div>
 
             <div id="screen-phase2">
-                <h2 class="blink" style="color: #ff3333;">⚠ WARNING: INTRUSION DETECTED ⚠</h2>
+                <h2 class="blink" style="color: #ff3333;">⚠ SECURITY BREACH ⚠</h2>
                 <div class="code-box" id="p2-code">????</div>
-                <input type="text" class="hack-input" id="p2-input" placeholder="TYPE CODE" onkeyup="checkHackInput(event)" autocomplete="off">
+                <input type="text" class="hack-input" id="p2-input" placeholder="TYPE CODE" onkeyup="checkP2(event)" autocomplete="off">
                 <div class="timer-bg"><div class="timer-fill" id="p2-timer"></div></div>
-                <p id="p2-info">DEFENSE REQUIRED: 0 / 3</p>
+                <p id="p2-info">DEFENSE: 0 / 3</p>
+            </div>
+
+            <div id="screen-phase3">
+                <div class="survival-timer">SURVIVE: <span id="dodge-timer">15.00</span>s</div>
+                <canvas id="gameCanvas" width="600" height="350"></canvas>
+                <p style="font-size: 0.9rem; color: #666; margin-top: 10px;">MOUSE TO MOVE / AVOID RED BLOCKS</p>
             </div>
 
             <div id="screen-end">
                 <h1 class="big-msg" id="end-title">GAME OVER</h1>
-                <p class="sub-msg" id="end-desc">REASON: MAJORITY DETECTED</p>
-                <button onclick="location.reload()" style="margin-top: 40px;">SYSTEM REBOOT</button>
+                <p id="end-desc">REASON: ...</p>
+                <button onclick="location.reload()" style="margin-top: 30px;">REBOOT</button>
             </div>
-
         </div>
     </div>
 
     <script>
-        /* ================= 초기 설정 ================= */
-        // 질문 데이터 (rate: 동의율)
-        // rate가 50 이상인 질문에서 '동의'하면 패배, '거절'하면 승리
-        const questions = [
-            { q: "비 오는 날보다 맑은 날이 좋다.", rate: 80 },  // 거절(20%)해야 생존
-            { q: "나는 민트초코를 돈 주고 사 먹는다.", rate: 30 }, // 동의(30%)해야 생존
-            { q: "솔직히 100억 주면 감옥 1년 간다.", rate: 75 },  // 거절(25%)해야 생존
-            { q: "다시 태어나도 한국인으로 태어난다.", rate: 45 }, // 동의(45%)해야 생존
-        ];
-
-        let currentQ = 0;
-        let isDead = false;
-
-        // 해킹 게임 변수
-        let hackScore = 0;
-        const hackGoal = 3;
-        let hackTimer;
-        let timeLeft = 100;
-        const hackSpeed = 0.8; // 타이머 줄어드는 속도 (높을수록 빠름)
-
-        /* ================= 함수 로직 ================= */
-
-        // 1. 게임 시작
-        function startGame() {
-            switchScreen('screen-phase1');
-            document.getElementById('stage-display').innerText = "1 - MINORITY";
-            showQuestion();
-        }
-
-        // 화면 전환 유틸리티
-        function switchScreen(id) {
-            const screens = ['screen-start', 'screen-phase1', 'screen-phase2', 'screen-end'];
-            screens.forEach(s => document.getElementById(s).style.display = 'none');
+        /* ================= GAME LOGIC ================= */
+        
+        // 유틸리티: 화면 전환
+        function showScreen(id) {
+            ['screen-start','screen-phase1','screen-phase2','screen-phase3','screen-end']
+                .forEach(s => document.getElementById(s).style.display = 'none');
             document.getElementById(id).style.display = 'block';
         }
 
         // --- PHASE 1: 소수결 ---
-        function showQuestion() {
-            const q = questions[currentQ];
-            document.getElementById('p1-text').innerText = `"${q.q}"`;
-            
-            // UI 초기화
+        const questions = [
+            { q: "비 오는 날이 맑은 날보다 좋다.", rate: 80 },  // NO(20%) 생존
+            { q: "10억 받기 vs 말하는 고양이 키우기", rate: 20 }, // YES(20%) 생존
+            { q: "솔직히 탕수육은 부먹이다.", rate: 45 }, // YES(45%) 생존
+        ];
+        let p1Idx = 0;
+
+        function startPhase1() {
+            showScreen('screen-phase1');
+            document.getElementById('stage-display').innerText = "1 - MINORITY";
+            renderP1();
+        }
+
+        function renderP1() {
+            const q = questions[p1Idx];
+            document.getElementById('p1-text').innerText = q.q;
             document.getElementById('p1-btns').style.display = 'flex';
             document.getElementById('bar-bg').style.display = 'none';
             document.getElementById('next-btn').style.display = 'none';
@@ -287,120 +215,200 @@
             document.getElementById('bar-fill').style.width = "0%";
         }
 
-        function checkAnswer(agree) {
-            const q = questions[currentQ];
-            const myRate = agree ? q.rate : (100 - q.rate);
-            const survived = myRate < 50;
-
-            // 결과 연출
+        function checkP1(agree) {
+            const q = questions[p1Idx];
+            const rate = agree ? q.rate : (100 - q.rate);
+            
             document.getElementById('p1-btns').style.display = 'none';
             document.getElementById('bar-bg').style.display = 'block';
-            
-            setTimeout(() => {
-                document.getElementById('bar-fill').style.width = myRate + "%";
-            }, 50);
+            setTimeout(() => document.getElementById('bar-fill').style.width = rate + "%", 50);
 
-            if (survived) {
-                document.getElementById('p1-msg').innerText = `생존. 당신은 ${myRate}%의 소수입니다.`;
-                document.getElementById('p1-msg').style.color = "var(--main-color)";
+            if (rate < 50) {
+                document.getElementById('p1-msg').innerText = `생존. 소수(${rate}%)입니다.`;
                 document.getElementById('next-btn').style.display = 'inline-block';
             } else {
-                document.getElementById('p1-msg').innerText = `발각. 당신은 ${myRate}%의 다수입니다.`;
-                document.getElementById('p1-msg').style.color = "red"; // 실패는 빨간색
-                isDead = true;
-                document.getElementById('next-btn').style.display = 'inline-block';
-                document.getElementById('next-btn').innerText = "CONNECTION LOST...";
+                failGame("MAJORITY DETECTED", "당신은 다수에 속했습니다.");
             }
         }
 
         function nextPhase1() {
-            if (isDead) {
-                showEnd("GAME OVER", "당신은 평범한 다수였습니다.");
-                return;
-            }
-
-            currentQ++;
-            if (currentQ >= questions.length) {
-                // 1부 클리어 -> 2부 시작
-                startPhase2();
-            } else {
-                showQuestion();
-            }
+            p1Idx++;
+            if (p1Idx >= questions.length) startPhase2();
+            else renderP1();
         }
 
-        // --- PHASE 2: 해킹 디펜스 ---
+        // --- PHASE 2: 해킹 ---
+        let p2Score = 0;
+        let p2TimerInterval;
+        let p2Time = 100;
+
         function startPhase2() {
-            // 분위기 전환 (Red Mode)
-            document.body.classList.add('red-mode');
-            document.getElementById('stage-display').innerText = "2 - BREACH";
-            document.getElementById('status-display').innerText = "DANGER";
-            
-            switchScreen('screen-phase2');
-            
-            // 해킹 게임 시작
-            nextHack();
+            document.body.classList.add('red-mode'); // 붉은 모드 진입
+            document.getElementById('stage-display').innerText = "2 - HACKING";
+            document.getElementById('status-display').innerText = "WARNING";
+            showScreen('screen-phase2');
+            nextP2();
         }
 
-        function generateCode() {
-            const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-            let res = "";
-            for(let i=0; i<4; i++) res += chars.charAt(Math.floor(Math.random() * chars.length));
-            return res;
-        }
-
-        function nextHack() {
-            if (hackScore >= hackGoal) {
-                showEnd("ALL CLEAR", "당신은 완벽한 아웃사이더입니다.");
-                document.getElementById('end-title').style.color = "#33ff33";
-                document.body.classList.remove('red-mode');
+        function nextP2() {
+            if (p2Score >= 3) {
+                clearInterval(p2TimerInterval);
+                startPhase3(); // 3단계로 이동
                 return;
             }
-
-            const code = generateCode();
+            
+            const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            let code = "";
+            for(let i=0; i<4; i++) code += chars.charAt(Math.floor(Math.random()*chars.length));
+            
             document.getElementById('p2-code').innerText = code;
             document.getElementById('p2-input').value = "";
             document.getElementById('p2-input').focus();
-            
-            // 타이머 리셋
-            timeLeft = 100;
-            clearInterval(hackTimer);
-            
-            hackTimer = setInterval(() => {
-                timeLeft -= hackSpeed;
-                document.getElementById('p2-timer').style.width = timeLeft + "%";
-                
-                if (timeLeft <= 0) {
-                    clearInterval(hackTimer);
-                    showEnd("HACKED", "시스템 방어에 실패했습니다.");
+
+            p2Time = 100;
+            clearInterval(p2TimerInterval);
+            p2TimerInterval = setInterval(() => {
+                p2Time -= 1.5;
+                document.getElementById('p2-timer').style.width = p2Time + "%";
+                if (p2Time <= 0) {
+                    clearInterval(p2TimerInterval);
+                    failGame("SYSTEM HACKED", "방화벽이 뚫렸습니다.");
                 }
-            }, 20); // 20ms마다 갱신
+            }, 50);
         }
 
-        function checkHackInput(e) {
+        function checkP2(e) {
             if (e.key === "Enter") {
                 const target = document.getElementById('p2-code').innerText;
-                const userIn = document.getElementById('p2-input').value.toUpperCase();
-
-                if (target === userIn) {
-                    // 성공
-                    hackScore++;
-                    document.getElementById('p2-info').innerText = `DEFENSE REQUIRED: ${hackScore} / ${hackGoal}`;
-                    nextHack();
+                const input = document.getElementById('p2-input').value.toUpperCase();
+                if (target === input) {
+                    p2Score++;
+                    document.getElementById('p2-info').innerText = `DEFENSE: ${p2Score} / 3`;
+                    nextP2();
                 } else {
-                    // 실패시 입력창 흔들림 효과 (CSS shake 재활용 가능하지만 간단히 빨갛게)
-                    document.getElementById('p2-input').value = "";
-                    document.getElementById('screen-phase2').classList.add('blink');
-                    setTimeout(() => document.getElementById('screen-phase2').classList.remove('blink'), 500);
+                    document.getElementById('p2-input').value = ""; // 틀리면 초기화
                 }
             }
         }
 
-        // --- END SCREEN ---
-        function showEnd(title, desc) {
-            clearInterval(hackTimer); // 타이머 확실히 중지
-            switchScreen('screen-end');
+        // --- PHASE 3: 탄막 회피 (CANVAS GAME) ---
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        let gameLoopId;
+        let p3TimeLeft = 15.00;
+        let enemies = [];
+        let player = { x: 300, y: 300, size: 15, color: '#33ff33' }; // 플레이어
+        
+        function startPhase3() {
+            showScreen('screen-phase3');
+            document.getElementById('stage-display').innerText = "3 - SURVIVAL";
+            document.getElementById('status-display').innerText = "CRITICAL";
+
+            // 마우스 이벤트 연결
+            canvas.addEventListener('mousemove', (e) => {
+                const rect = canvas.getBoundingClientRect();
+                player.x = e.clientX - rect.left;
+                player.y = e.clientY - rect.top;
+            });
+
+            // 게임 루프 시작
+            gameLoopId = requestAnimationFrame(gameLoop);
+        }
+
+        function spawnEnemy() {
+            // 화면 위에서 랜덤하게 떨어지는 적
+            if (Math.random() < 0.15) { // 15% 확률로 생성 (난이도 조절)
+                enemies.push({
+                    x: Math.random() * canvas.width,
+                    y: -20,
+                    size: Math.random() * 20 + 10,
+                    speed: Math.random() * 4 + 2, // 속도
+                    color: '#ff3333'
+                });
+            }
+            // 옆에서 날아오는 적 (가끔 생성)
+            if (Math.random() < 0.05) {
+                enemies.push({
+                    x: -20,
+                    y: Math.random() * canvas.height,
+                    size: 15,
+                    speedX: Math.random() * 5 + 3,
+                    speedY: 0,
+                    color: '#ff3333',
+                    type: 'side'
+                });
+            }
+        }
+
+        function gameLoop() {
+            // 1. 화면 지우기
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)'; // 잔상 효과
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 2. 타이머 계산
+            p3TimeLeft -= 0.016; // 대략 60fps 기준
+            document.getElementById('dodge-timer').innerText = p3TimeLeft.toFixed(2);
+
+            if (p3TimeLeft <= 0) {
+                cancelAnimationFrame(gameLoopId);
+                gameClear();
+                return;
+            }
+
+            // 3. 플레이어 그리기 (초록색 사각형)
+            ctx.fillStyle = player.color;
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = player.color;
+            ctx.fillRect(player.x - player.size/2, player.y - player.size/2, player.size, player.size);
+            ctx.shadowBlur = 0; // 리셋
+
+            // 4. 적 생성 및 이동
+            spawnEnemy();
+
+            for (let i = 0; i < enemies.length; i++) {
+                let e = enemies[i];
+                
+                // 이동
+                if (e.type === 'side') e.x += e.speedX;
+                else e.y += e.speed;
+
+                // 그리기 (빨간색)
+                ctx.fillStyle = e.color;
+                ctx.fillRect(e.x, e.y, e.size, e.size);
+
+                // 충돌 감지 (AABB 방식)
+                if (
+                    player.x < e.x + e.size &&
+                    player.x + player.size > e.x &&
+                    player.y < e.y + e.size &&
+                    player.y + player.size > e.y
+                ) {
+                    cancelAnimationFrame(gameLoopId);
+                    failGame("KILLED", "공격에 당했습니다.");
+                    return;
+                }
+            }
+
+            gameLoopId = requestAnimationFrame(gameLoop);
+        }
+
+
+        // --- 공통 엔딩 ---
+        function failGame(title, desc) {
+            showScreen('screen-end');
             document.getElementById('end-title').innerText = title;
+            document.getElementById('end-title').style.color = "red";
             document.getElementById('end-desc').innerText = desc;
+            clearInterval(p2TimerInterval);
+            if(gameLoopId) cancelAnimationFrame(gameLoopId);
+        }
+
+        function gameClear() {
+            showScreen('screen-end');
+            document.getElementById('end-title').innerText = "ALL CLEAR";
+            document.getElementById('end-title').style.color = "#33ff33";
+            document.getElementById('end-desc').innerText = "축하합니다. 당신은 완벽히 생존했습니다.";
+            document.body.classList.remove('red-mode');
         }
 
     </script>
