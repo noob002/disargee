@@ -31,7 +31,9 @@
         body.mode-green { --main-color: #33ff33; }
         body.mode-yellow { --main-color: #ffcc00; }
         body.mode-red { --main-color: #ff3333; }
-        body.mode-break { --main-color: #ffffff; } /* 휴식 땐 흰색 */
+        body.mode-break { --main-color: #ffffff; }
+        body.mode-clear { --main-color: #00ffff; }
+        body.mode-gray { --main-color: #888888; } /* 밍밍한 엔딩용 */
 
         .crt-frame {
             border: 4px solid var(--main-color);
@@ -45,6 +47,7 @@
             display: flex;
             flex-direction: column;
             transition: border-color 1s, box-shadow 1s;
+            z-index: 10;
         }
 
         .scanline {
@@ -65,11 +68,20 @@
             cursor: pointer; margin: 10px; transition: 0.2s;
         }
         button:hover { background-color: var(--main-color); color: #000; }
+        
+        /* 스킵 버튼 스타일 (평소엔 숨김) */
+        #skip-btn {
+            display: none;
+            border-style: dashed;
+            font-size: 1.2rem;
+            margin-top: 10px;
+            opacity: 0.7;
+        }
 
         /* Phases */
         #screen-phase1, #screen-phase2, #screen-phase3, #screen-end { display: none; width: 100%; text-align: center; }
 
-        /* Phase 1 & 2 Styles (생략 - 이전과 동일) */
+        /* Styles */
         .question-text { font-size: 2rem; min-height: 80px; margin-bottom: 30px; }
         .result-bar-bg { width: 100%; height: 20px; background: #111; border: 1px solid var(--main-color); margin-top: 20px; display: none; }
         .result-bar-fill { height: 100%; background: var(--main-color); width: 0%; transition: width 0.5s; }
@@ -78,23 +90,24 @@
         .timer-bg { width: 100%; height: 10px; background: #330000; margin-top: 30px; }
         .timer-fill { width: 100%; height: 100%; background: #ff3333; }
 
-        /* Phase 3 Specific */
         #screen-phase3 { height: 100%; position: relative; }
         canvas { border: 2px solid var(--main-color); background: #000; cursor: none; display: block; margin: 0 auto; transition: border-color 1s; }
         .survival-timer { font-size: 2rem; margin-bottom: 10px; color: var(--main-color); transition: color 1s; }
-        
-        /* 휴식 시간 텍스트 오버레이 */
         #break-overlay {
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            width: 100%;
-            text-align: center;
-            font-size: 2rem;
-            color: #fff;
-            text-shadow: 0 0 10px #fff;
-            display: none;
-            pointer-events: none; /* 마우스 통과 */
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 100%; text-align: center; font-size: 2rem; color: #fff;
+            text-shadow: 0 0 10px #fff; display: none; pointer-events: none;
+        }
+
+        /* ENDING */
+        #screen-end { position: relative; height: 100%; }
+        #end-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+        .end-content { position: relative; z-index: 1; display: flex; flex-direction: column; justify-content: center; height: 100%; }
+        
+        .shine-text { font-size: 5rem; margin: 0; animation: shine 2s infinite alternate; }
+        @keyframes shine {
+            from { text-shadow: 0 0 10px var(--main-color); }
+            to { text-shadow: 0 0 30px var(--main-color), 0 0 10px #fff; transform: scale(1.05); }
         }
         
         .blink { animation: blink 1s infinite; }
@@ -150,15 +163,21 @@
             </div>
 
             <div id="screen-end">
-                <h1 class="big-msg" style="font-size: 4rem; margin: 0;" id="end-title">GAME OVER</h1>
-                <p id="end-desc">REASON: ...</p>
-                <button onclick="location.reload()" style="margin-top: 30px;">REBOOT</button>
+                <canvas id="end-canvas"></canvas>
+                <div class="end-content">
+                    <h1 class="shine-text" id="end-title">ALL CLEAR</h1>
+                    <p id="end-desc" style="font-size: 1.5rem; margin-top: 20px;">...</p>
+                    
+                    <button id="reboot-btn" onclick="location.reload()" style="margin-top: 40px;">SYSTEM REBOOT</button>
+                    
+                    <button id="skip-btn" onclick="skipToEnding()">>> SKIP TO ENDING >></button>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        /* ================= UTILS & CONFIG ================= */
+        /* ================= UTILS ================= */
         function showScreen(id) {
             ['screen-start','screen-phase1','screen-phase2','screen-phase3','screen-end']
                 .forEach(s => document.getElementById(s).style.display = 'none');
@@ -166,7 +185,10 @@
         }
         function setTheme(mode) { document.body.className = `mode-${mode}`; }
 
-        /* ================= PHASE 1: MINORITY ================= */
+        // 실패 횟수 카운터
+        let failCount = 0; 
+
+        /* ================= PHASE 1 ================= */
         const questions = [
             { q: "비 오는 날이 맑은 날보다 좋다.", rate: 80 }, 
             { q: "10억 받기 vs 말하는 고양이 키우기", rate: 20 },
@@ -206,7 +228,7 @@
             if (p1Idx >= questions.length) startPhase2(); else renderP1();
         }
 
-        /* ================= PHASE 2: HACKING ================= */
+        /* ================= PHASE 2 ================= */
         let p2Score = 0;
         let p2TimerInterval;
         let p2Time = 100;
@@ -248,23 +270,19 @@
             }
         }
 
-        /* ================= PHASE 3: SURVIVAL (UPDATED) ================= */
+        /* ================= PHASE 3: DODGE (NERFED) ================= */
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         let gameLoopId;
         
-        // 시간 설정 (총 45초)
-        // 45~30(초록) -> 30~25(휴식) -> 25~10(노랑) -> 10~5(휴식) -> 5~0(빨강)
         let p3TotalTime = 45.00;
-        
         let player = { x: 300, y: 175, size: 10, color: '#fff' };
         let enemies = [];
         let warnings = [];
-        let gameState = 'ready'; // ready, playing
-        let currentPhase = 'green'; // green, break1, yellow, break2, red
+        let gameState = 'ready';
+        let currentPhase = 'green';
         let countdownNum = 3;
 
-        // 타이핑 효과 변수
         let typeWriterIdx = 0;
         let typeWriterText = "";
         let typeWriterInterval;
@@ -273,7 +291,6 @@
             showScreen('screen-phase3');
             document.getElementById('stage-display').innerText = "3 - SURVIVAL";
             
-            // 초기화
             setTheme('green');
             enemies = [];
             warnings = [];
@@ -290,7 +307,6 @@
                 player.y = e.clientY - rect.top;
             });
 
-            // 3, 2, 1 카운트다운
             const countInterval = setInterval(() => {
                 if (countdownNum > 0) {
                     document.getElementById('dodge-timer').innerText = `START IN ${countdownNum}...`;
@@ -305,14 +321,12 @@
             gameLoopId = requestAnimationFrame(gameLoop);
         }
 
-        // 텍스트 타이핑 효과 함수
         function startTyping(text) {
             const overlay = document.getElementById('break-overlay');
             overlay.style.display = 'block';
             overlay.innerText = "";
             typeWriterText = text;
             typeWriterIdx = 0;
-            
             clearInterval(typeWriterInterval);
             typeWriterInterval = setInterval(() => {
                 if (typeWriterIdx < typeWriterText.length) {
@@ -321,15 +335,13 @@
                 } else {
                     clearInterval(typeWriterInterval);
                 }
-            }, 100); // 글자 나오는 속도
+            }, 100);
         }
 
         function gameLoop() {
-            // 캔버스 클리어 (잔상 효과)
             ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // 플레이어 그리기
             ctx.fillStyle = "#ffffff";
             ctx.shadowBlur = 10; ctx.shadowColor = "#fff";
             ctx.fillRect(player.x - player.size/2, player.y - player.size/2, player.size, player.size);
@@ -342,95 +354,55 @@
                 return;
             }
 
-            // --- 시간 관리 및 페이즈 전환 로직 ---
             p3TotalTime -= 0.016;
             document.getElementById('dodge-timer').innerText = p3TotalTime.toFixed(2);
 
             let newPhase = currentPhase;
-
-            // 시간대별 페이즈 정의 (총 45초)
-            if (p3TotalTime > 30) {
-                // 45~30초 (15초간): GREEN
-                newPhase = 'green';
-            } else if (p3TotalTime > 25) {
-                // 30~25초 (5초간): BREAK 1
-                newPhase = 'break1';
-            } else if (p3TotalTime > 10) {
-                // 25~10초 (15초간): YELLOW
-                newPhase = 'yellow';
-            } else if (p3TotalTime > 5) {
-                // 10~5초 (5초간): BREAK 2 (중요 문구)
-                newPhase = 'break2';
-            } else if (p3TotalTime > 0) {
-                // 5~0초 (5초간): RED (짧고 굵게)
-                newPhase = 'red';
-            } else {
+            if (p3TotalTime > 30) newPhase = 'green';
+            else if (p3TotalTime > 25) newPhase = 'break1';
+            else if (p3TotalTime > 10) newPhase = 'yellow';
+            else if (p3TotalTime > 5) newPhase = 'break2';
+            else if (p3TotalTime > 0) newPhase = 'red';
+            else {
                 cancelAnimationFrame(gameLoopId);
                 gameClear();
                 return;
             }
 
-            // 페이즈가 바뀔 때 1번만 실행되는 로직
             if (newPhase !== currentPhase) {
                 currentPhase = newPhase;
-                
                 if (currentPhase === 'break1') {
-                    setTheme('break');
-                    enemies = []; warnings = []; // 적 제거 (휴식)
-                    startTyping("SYSTEM UPGRADE...");
-                } 
-                else if (currentPhase === 'break2') {
-                    setTheme('break');
-                    enemies = []; warnings = [];
-                    startTyping("당신은 과연 이 이상을 깰 수 있을까?"); // 요청하신 문구
-                }
-                else if (currentPhase === 'green') {
-                    setTheme('green');
-                    document.getElementById('break-overlay').style.display = 'none';
-                    document.getElementById('status-display').innerText = "SAFE";
-                }
-                else if (currentPhase === 'yellow') {
-                    setTheme('yellow');
-                    document.getElementById('break-overlay').style.display = 'none';
-                    document.getElementById('status-display').innerText = "CAUTION";
-                }
-                else if (currentPhase === 'red') {
-                    setTheme('red');
-                    document.getElementById('break-overlay').style.display = 'none';
-                    document.getElementById('status-display').innerText = "CRITICAL";
+                    setTheme('break'); enemies = []; warnings = []; startTyping("SYSTEM UPGRADE...");
+                } else if (currentPhase === 'break2') {
+                    setTheme('break'); enemies = []; warnings = []; startTyping("당신은 과연 이 이상을 깰 수 있을까?");
+                } else if (currentPhase === 'green') {
+                    setTheme('green'); document.getElementById('break-overlay').style.display = 'none'; document.getElementById('status-display').innerText = "SAFE";
+                } else if (currentPhase === 'yellow') {
+                    setTheme('yellow'); document.getElementById('break-overlay').style.display = 'none'; document.getElementById('status-display').innerText = "CAUTION";
+                } else if (currentPhase === 'red') {
+                    setTheme('red'); document.getElementById('break-overlay').style.display = 'none'; document.getElementById('status-display').innerText = "CRITICAL";
                 }
             }
 
-            // --- 적 생성 로직 (휴식시간엔 생성 안 함) ---
-            if (!currentPhase.includes('break')) {
-                spawnPattern(currentPhase);
-            }
+            if (!currentPhase.includes('break')) spawnPattern(currentPhase);
 
-            // 1. 경고선 업데이트
+            // 경고선
             for (let i = warnings.length - 1; i >= 0; i--) {
                 let w = warnings[i];
                 w.timer--;
                 if (w.timer > 0) {
-                    ctx.save();
-                    ctx.beginPath();
-                    ctx.setLineDash([10, 10]);
+                    ctx.save(); ctx.beginPath(); ctx.setLineDash([10, 10]);
                     ctx.strokeStyle = (Math.floor(Date.now() / 50) % 2 === 0) ? "#ffcc00" : "#554400";
-                    ctx.lineWidth = 2;
-                    ctx.moveTo(w.x, 0); ctx.lineTo(w.x, canvas.height);
-                    ctx.stroke();
-                    ctx.restore();
+                    ctx.lineWidth = 2; ctx.moveTo(w.x, 0); ctx.lineTo(w.x, canvas.height); ctx.stroke(); ctx.restore();
                 } else {
-                    enemies.push({
-                        x: w.x - (w.width/2), y: -50,
-                        size: w.width,
-                        speed: (currentPhase === 'red' ? 18 : 12),
-                        type: 'blitz', color: '#ff0000'
-                    });
+                    // [너프 수정] 속도 감소 (18 -> 10)
+                    let missileSpeed = (currentPhase === 'red') ? 10 : 8; 
+                    enemies.push({ x: w.x - (w.width/2), y: -50, size: w.width, speed: missileSpeed, type: 'blitz', color: '#ff0000' });
                     warnings.splice(i, 1);
                 }
             }
 
-            // 2. 적 이동 및 충돌
+            // 적 이동
             for (let i = 0; i < enemies.length; i++) {
                 let e = enemies[i];
                 e.y += e.speed;
@@ -438,13 +410,7 @@
                 let height = (e.type === 'blitz') ? canvas.height : e.size; 
                 ctx.fillRect(e.x, e.y, e.size, height);
 
-                // 충돌
-                if (
-                    player.x < e.x + e.size &&
-                    player.x + player.size > e.x &&
-                    player.y < e.y + height &&
-                    player.y + player.size > e.y
-                ) {
+                if (player.x < e.x + e.size && player.x + player.size > e.x && player.y < e.y + height && player.y + player.size > e.y) {
                     cancelAnimationFrame(gameLoopId);
                     failGame("KILLED", "생존에 실패했습니다.");
                     return;
@@ -455,53 +421,124 @@
             gameLoopId = requestAnimationFrame(gameLoop);
         }
 
-        // 패턴 생성기
         function spawnPattern(phase) {
             if (phase === 'green') {
-                if (Math.random() < 0.05) { // 천천히 떨어지는 초록 박스
-                    enemies.push({
-                        x: Math.random() * canvas.width, y: -20,
-                        size: Math.random() * 15 + 10,
-                        speed: (Math.random() * 2 + 1),
-                        type: 'normal', color: '#33ff33'
-                    });
-                }
+                if (Math.random() < 0.05) enemies.push({ x: Math.random() * canvas.width, y: -20, size: Math.random() * 15 + 10, speed: (Math.random() * 2 + 1), type: 'normal', color: '#33ff33' });
             } else if (phase === 'yellow') {
-                if (Math.random() < 0.04) { // 점선 경고만
-                    warnings.push({ x: Math.random() * canvas.width, width: 25, timer: 90, active: true });
-                }
+                if (Math.random() < 0.04) warnings.push({ x: Math.random() * canvas.width, width: 25, timer: 90, active: true });
             } else if (phase === 'red') {
-                // 빨간맛: 둘 다 나옴 + 빠름
-                if (Math.random() < 0.2) {
-                    warnings.push({ x: Math.random() * canvas.width, width: 30, timer: 40, active: true }); // 경고 시간 짧음
-                }
-                if (Math.random() < 0.3) {
-                    enemies.push({
-                        x: Math.random() * canvas.width, y: -20,
-                        size: Math.random() * 15 + 10,
-                        speed: (Math.random() * 5 + 5), // 매우 빠름
-                        type: 'normal', color: '#ff3333'
-                    });
-                }
+                // [너프 수정] 등장 확률 감소 (0.2 -> 0.1, 0.3 -> 0.15)
+                // [너프 수정] 경고 시간 증가 (40프레임 -> 70프레임, 더 오래 보여줌)
+                if (Math.random() < 0.1) warnings.push({ x: Math.random() * canvas.width, width: 30, timer: 70, active: true });
+                // [너프 수정] 속도 감소 (5+5 -> 4+3)
+                if (Math.random() < 0.15) enemies.push({ x: Math.random() * canvas.width, y: -20, size: Math.random() * 15 + 10, speed: (Math.random() * 4 + 3), type: 'normal', color: '#ff3333' });
             }
         }
 
-        /* ================= ENDINGS ================= */
+        /* ================= GAME OVER / ENDING LOGIC ================= */
+        
         function failGame(title, desc) {
+            failCount++; // 실패 횟수 증가
+            
             showScreen('screen-end');
             setTheme('red');
-            document.getElementById('end-title').innerText = title;
-            document.getElementById('end-title').style.color = "red";
+            document.getElementById('end-canvas').style.display = 'none'; // 폭죽 X
+            
+            const titleEl = document.getElementById('end-title');
+            titleEl.innerText = title;
+            titleEl.className = "big-msg"; 
+            titleEl.style.color = "red";
+            
             document.getElementById('end-desc').innerText = desc;
+
+            // 5회 이상 실패 시 스킵 버튼 보이기
+            if (failCount >= 5) {
+                document.getElementById('skip-btn').style.display = 'inline-block';
+            } else {
+                document.getElementById('skip-btn').style.display = 'none';
+            }
+
             clearInterval(p2TimerInterval);
             if(gameLoopId) cancelAnimationFrame(gameLoopId);
         }
+
+        // 스킵 엔딩 (밍밍한 엔딩)
+        function skipToEnding() {
+            showScreen('screen-end');
+            setTheme('gray'); // 회색 테마
+            
+            document.getElementById('end-canvas').style.display = 'none'; // 폭죽 없음
+            document.getElementById('skip-btn').style.display = 'none'; // 버튼 숨김
+            
+            const titleEl = document.getElementById('end-title');
+            titleEl.innerText = "SKIPPED";
+            titleEl.className = "big-msg"; // 반짝임 없음
+            titleEl.style.color = "#888"; // 회색
+            
+            document.getElementById('end-desc').innerText = "포기하셨습니다. 평범한 결말입니다.";
+            document.getElementById('stage-display').innerText = "END";
+            document.getElementById('status-display').innerText = "GAVE UP";
+        }
+
+        // 진 엔딩 (폭죽)
         function gameClear() {
             showScreen('screen-end');
-            setTheme('green');
-            document.getElementById('end-title').innerText = "ALL CLEAR";
-            document.getElementById('end-title').style.color = "#33ff33";
+            setTheme('clear');
+            document.getElementById('stage-display').innerText = "ALL CLEAR";
+            document.getElementById('status-display').innerText = "LEGEND";
+            document.getElementById('skip-btn').style.display = 'none';
+            
+            document.getElementById('end-canvas').style.display = 'block';
+            const titleEl = document.getElementById('end-title');
+            titleEl.innerText = "ALL CLEAR";
+            titleEl.className = "shine-text"; // 반짝임
+            titleEl.style.color = "#00ffff";
             document.getElementById('end-desc').innerText = "축하합니다. 당신은 완벽히 생존했습니다.";
+
+            startFireworks();
+        }
+
+        /* ================= FIREWORKS ================= */
+        let fireworks = [];
+        let particles = [];
+        let endCtx, endCanvas;
+
+        function startFireworks() {
+            endCanvas = document.getElementById('end-canvas');
+            endCtx = endCanvas.getContext('2d');
+            endCanvas.width = endCanvas.offsetWidth;
+            endCanvas.height = endCanvas.offsetHeight;
+            fireworks = []; particles = [];
+            loopFireworks();
+        }
+
+        function loopFireworks() {
+            endCtx.clearRect(0, 0, endCanvas.width, endCanvas.height);
+            if (Math.random() < 0.05) {
+                fireworks.push({
+                    x: Math.random() * endCanvas.width, y: endCanvas.height,
+                    targetY: Math.random() * (endCanvas.height / 2),
+                    speed: 10 + Math.random() * 5, color: `hsl(${Math.random() * 360}, 100%, 50%)`
+                });
+            }
+            for (let i = fireworks.length - 1; i >= 0; i--) {
+                let f = fireworks[i]; f.y -= f.speed;
+                endCtx.fillStyle = f.color; endCtx.fillRect(f.x, f.y, 4, 10);
+                if (f.y <= f.targetY) { explode(f.x, f.y, f.color); fireworks.splice(i, 1); }
+            }
+            for (let i = particles.length - 1; i >= 0; i--) {
+                let p = particles[i]; p.x += p.vx; p.y += p.vy; p.vy += 0.05; p.alpha -= 0.01;
+                endCtx.save(); endCtx.globalAlpha = p.alpha; endCtx.fillStyle = p.color;
+                endCtx.fillRect(p.x, p.y, 4, 4); endCtx.restore();
+                if (p.alpha <= 0) particles.splice(i, 1);
+            }
+            requestAnimationFrame(loopFireworks);
+        }
+        function explode(x, y, color) {
+            for (let i = 0; i < 30; i++) {
+                const angle = Math.random() * Math.PI * 2; const speed = Math.random() * 5 + 2;
+                particles.push({ x: x, y: y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, alpha: 1, color: color });
+            }
         }
     </script>
 </body>
