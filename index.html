@@ -27,13 +27,13 @@
             transition: color 1s ease;
         }
 
-        /* 색상 테마 클래스 */
+        /* 테마 클래스 */
         body.mode-green { --main-color: #33ff33; }
         body.mode-yellow { --main-color: #ffcc00; }
         body.mode-red { --main-color: #ff3333; }
         body.mode-break { --main-color: #ffffff; }
         body.mode-clear { --main-color: #00ffff; }
-        body.mode-gray { --main-color: #888888; } /* 밍밍한 엔딩용 */
+        body.mode-gray { --main-color: #888888; }
 
         .crt-frame {
             border: 4px solid var(--main-color);
@@ -69,14 +69,7 @@
         }
         button:hover { background-color: var(--main-color); color: #000; }
         
-        /* 스킵 버튼 스타일 (평소엔 숨김) */
-        #skip-btn {
-            display: none;
-            border-style: dashed;
-            font-size: 1.2rem;
-            margin-top: 10px;
-            opacity: 0.7;
-        }
+        #skip-btn { display: none; border-style: dashed; font-size: 1.2rem; margin-top: 10px; opacity: 0.7; }
 
         /* Phases */
         #screen-phase1, #screen-phase2, #screen-phase3, #screen-end { display: none; width: 100%; text-align: center; }
@@ -103,13 +96,11 @@
         #screen-end { position: relative; height: 100%; }
         #end-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
         .end-content { position: relative; z-index: 1; display: flex; flex-direction: column; justify-content: center; height: 100%; }
-        
         .shine-text { font-size: 5rem; margin: 0; animation: shine 2s infinite alternate; }
         @keyframes shine {
             from { text-shadow: 0 0 10px var(--main-color); }
             to { text-shadow: 0 0 30px var(--main-color), 0 0 10px #fff; transform: scale(1.05); }
         }
-        
         .blink { animation: blink 1s infinite; }
         @keyframes blink { 50% { opacity: 0; } }
     </style>
@@ -167,9 +158,7 @@
                 <div class="end-content">
                     <h1 class="shine-text" id="end-title">ALL CLEAR</h1>
                     <p id="end-desc" style="font-size: 1.5rem; margin-top: 20px;">...</p>
-                    
                     <button id="reboot-btn" onclick="location.reload()" style="margin-top: 40px;">SYSTEM REBOOT</button>
-                    
                     <button id="skip-btn" onclick="skipToEnding()">>> SKIP TO ENDING >></button>
                 </div>
             </div>
@@ -185,7 +174,6 @@
         }
         function setTheme(mode) { document.body.className = `mode-${mode}`; }
 
-        // 실패 횟수 카운터
         let failCount = 0; 
 
         /* ================= PHASE 1 ================= */
@@ -270,7 +258,7 @@
             }
         }
 
-        /* ================= PHASE 3: DODGE (NERFED) ================= */
+        /* ================= PHASE 3: DODGE (SUPER EASY) ================= */
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         let gameLoopId;
@@ -395,8 +383,8 @@
                     ctx.strokeStyle = (Math.floor(Date.now() / 50) % 2 === 0) ? "#ffcc00" : "#554400";
                     ctx.lineWidth = 2; ctx.moveTo(w.x, 0); ctx.lineTo(w.x, canvas.height); ctx.stroke(); ctx.restore();
                 } else {
-                    // [너프 수정] 속도 감소 (18 -> 10)
-                    let missileSpeed = (currentPhase === 'red') ? 10 : 8; 
+                    // [대폭 하향] 미사일 속도: 이전 10~18 -> 지금 5~6
+                    let missileSpeed = (currentPhase === 'red') ? 6 : 5; 
                     enemies.push({ x: w.x - (w.width/2), y: -50, size: w.width, speed: missileSpeed, type: 'blitz', color: '#ff0000' });
                     warnings.splice(i, 1);
                 }
@@ -427,22 +415,21 @@
             } else if (phase === 'yellow') {
                 if (Math.random() < 0.04) warnings.push({ x: Math.random() * canvas.width, width: 25, timer: 90, active: true });
             } else if (phase === 'red') {
-                // [너프 수정] 등장 확률 감소 (0.2 -> 0.1, 0.3 -> 0.15)
-                // [너프 수정] 경고 시간 증가 (40프레임 -> 70프레임, 더 오래 보여줌)
-                if (Math.random() < 0.1) warnings.push({ x: Math.random() * canvas.width, width: 30, timer: 70, active: true });
-                // [너프 수정] 속도 감소 (5+5 -> 4+3)
-                if (Math.random() < 0.15) enemies.push({ x: Math.random() * canvas.width, y: -20, size: Math.random() * 15 + 10, speed: (Math.random() * 4 + 3), type: 'normal', color: '#ff3333' });
+                // [대폭 하향] 생성 확률 5%, 경고 시간 100프레임 (약 1.6초, 아주 여유로움)
+                if (Math.random() < 0.05) warnings.push({ x: Math.random() * canvas.width, width: 30, timer: 100, active: true });
+                // [대폭 하향] 생성 확률 8%, 속도 2~4 (아주 느림)
+                if (Math.random() < 0.08) enemies.push({ x: Math.random() * canvas.width, y: -20, size: Math.random() * 15 + 10, speed: (Math.random() * 2 + 2), type: 'normal', color: '#ff3333' });
             }
         }
 
         /* ================= GAME OVER / ENDING LOGIC ================= */
         
         function failGame(title, desc) {
-            failCount++; // 실패 횟수 증가
+            failCount++; 
             
             showScreen('screen-end');
             setTheme('red');
-            document.getElementById('end-canvas').style.display = 'none'; // 폭죽 X
+            document.getElementById('end-canvas').style.display = 'none'; 
             
             const titleEl = document.getElementById('end-title');
             titleEl.innerText = title;
@@ -451,7 +438,6 @@
             
             document.getElementById('end-desc').innerText = desc;
 
-            // 5회 이상 실패 시 스킵 버튼 보이기
             if (failCount >= 5) {
                 document.getElementById('skip-btn').style.display = 'inline-block';
             } else {
@@ -462,25 +448,23 @@
             if(gameLoopId) cancelAnimationFrame(gameLoopId);
         }
 
-        // 스킵 엔딩 (밍밍한 엔딩)
         function skipToEnding() {
             showScreen('screen-end');
-            setTheme('gray'); // 회색 테마
+            setTheme('gray');
             
-            document.getElementById('end-canvas').style.display = 'none'; // 폭죽 없음
-            document.getElementById('skip-btn').style.display = 'none'; // 버튼 숨김
+            document.getElementById('end-canvas').style.display = 'none'; 
+            document.getElementById('skip-btn').style.display = 'none'; 
             
             const titleEl = document.getElementById('end-title');
             titleEl.innerText = "SKIPPED";
-            titleEl.className = "big-msg"; // 반짝임 없음
-            titleEl.style.color = "#888"; // 회색
+            titleEl.className = "big-msg"; 
+            titleEl.style.color = "#888"; 
             
             document.getElementById('end-desc').innerText = "포기하셨습니다. 평범한 결말입니다.";
             document.getElementById('stage-display').innerText = "END";
             document.getElementById('status-display').innerText = "GAVE UP";
         }
 
-        // 진 엔딩 (폭죽)
         function gameClear() {
             showScreen('screen-end');
             setTheme('clear');
@@ -491,7 +475,7 @@
             document.getElementById('end-canvas').style.display = 'block';
             const titleEl = document.getElementById('end-title');
             titleEl.innerText = "ALL CLEAR";
-            titleEl.className = "shine-text"; // 반짝임
+            titleEl.className = "shine-text"; 
             titleEl.style.color = "#00ffff";
             document.getElementById('end-desc').innerText = "축하합니다. 당신은 완벽히 생존했습니다.";
 
